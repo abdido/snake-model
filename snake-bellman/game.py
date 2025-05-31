@@ -88,10 +88,12 @@ class SnakeGameAI:
             self._place_food()
         else:
             self.snake.pop()
-        
+            reward = -0.1  # penalti kecil agar tidak berputar-putar
+
         # 5. update ui and clock
         self._update_ui()
         self.clock.tick(SPEED)
+
         # 6. return game over and score
         return reward, game_over, self.score
 
