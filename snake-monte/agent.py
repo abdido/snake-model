@@ -105,11 +105,17 @@ class Agent:
 def train():
     plot_scores = []
     plot_mean_scores = []
-    total_score = 0
+    cumulative_scores = 0
     record = 0
+    record_on = 0
     agent = Agent()
     game = SnakeGameAI()
-    cumulative_score = 0
+    start_time = time.time()
+    longest_time = 0
+    time_on = 0
+    
+    print('Training started...')
+
     
     while True:
         # get old state
@@ -128,25 +134,45 @@ def train():
         # remember
         agent.remember(state_old, final_move, reward, state_new, done)
 
+        
         if done:
             # train long memory, plot result
             game.reset()
             agent.n_games += 1
             agent.train_long_memory()
-            # cumulative_score += score
+            cumulative_scores += score
+            running_time = time.time() - start_time
 
             if score > record:
                 record = score
                 agent.model.save()
+                record_on = agent.n_games
+
+            if running_time > longest_time:
+                longest_time = running_time
+                time_on = agent.n_games
 
 
             plot_scores.append(score)
-            total_score += score
-            mean_score = total_score / agent.n_games
+            mean_score = cumulative_scores / agent.n_games
             plot_mean_scores.append(mean_score)
             plot(plot_scores, plot_mean_scores)
 
-            print('Game', agent.n_games, 'Score', score, 'Record:', record, 'All Score:', total_score, 'Mean Score:', mean_score)
+            print(
+                'Monte Carlo Learning',
+                '\nEpisode:', agent.n_games,
+                '\nScore', score, 
+                '\nHigh Score:', record, 'pada episode ke-', record_on,\
+                '\nAll Scores:', cumulative_scores,
+                '\nMean Score:', mean_score, 
+                '\nEpsilon:', agent.epsilon, 
+                '\nTime:', running_time,
+                '\nLongest Time:', longest_time, 'pada episode ke-', time_on,
+                '\n')
+            
+            running_time = 0
+            start_time = time.time()
+            time.sleep(0.5)
 
 if __name__ == '__main__':
     train()
