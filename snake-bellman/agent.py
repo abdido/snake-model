@@ -13,14 +13,15 @@ LEARNING_RATE = 0.001
 waktu = time.gmtime(8)
 
 class Agent:
-
     def __init__(self):
         self.n_games = 0
-        self.epsilon = 0 # randomness
-        self.gamma = 0.9 # discount rate
-        self.memory = deque(maxlen=MAX_MEMORY) # popleft()
+        self.epsilon_max = 80
+        self.epsilon_min = 0.01
+        self.epsilon_decay = 0.01  # Semakin kecil = semakin lambat turun
+        self.gamma = 0.9  # discount rate
+        self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         self.model = Linear_QNet(11, 256, 3)
-        self.trainer = QTrainer(self.model, lr=LEARNING_RATE, gamma=self.gamma)
+        self.trainer = QTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
 
 
     def get_state(self, game):
@@ -87,10 +88,12 @@ class Agent:
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, state):
-        # random moves: tradeoff exploration / exploitation
-        self.epsilon = 80 - self.n_games
-        final_move = [0,0,0]
-        if random.randint(0, 200) < self.epsilon:
+        # Epsilon decay eksponensial
+        self.epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * \
+                    np.exp(-self.epsilon_decay * self.n_games)
+
+        final_move = [0, 0, 0]
+        if random.random() < self.epsilon:
             move = random.randint(0, 2)
             final_move[move] = 1
         else:

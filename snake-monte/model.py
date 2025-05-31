@@ -26,11 +26,11 @@ class Linear_QNet(nn.Module):
         torch.save(self.state_dict(), file_name)
 
 class MonteCarloTrainer:
-    def __init__(self, model, lr, gamma):
-        self.lr = lr
+    def __init__(self, model, learning_rate, gamma):
+        self.learning_rate = learning_rate
         self.gamma = gamma
         self.model = model
-        self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
+        self.optimizer = optim.Adam(model.parameters(), learning_rate=self.learning_rate)
         self.criterion = nn.MSELoss()
         
         # Store episode data
@@ -139,11 +139,11 @@ class MonteCarloTrainer:
 class HybridTrainer:
     """Hybrid approach: Short memory (Bellman) + Long memory (Monte Carlo)"""
     
-    def __init__(self, model, lr, gamma):
-        self.lr = lr
+    def __init__(self, model, learning_rate, gamma):
+        self.learning_rate = learning_rate
         self.gamma = gamma
         self.model = model
-        self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
+        self.optimizer = optim.Adam(model.parameters(), learning_rate=self.learning_rate)
         self.criterion = nn.MSELoss()
         
         # Episode memory for Monte Carlo
@@ -243,11 +243,11 @@ class HybridTrainer:
 
 # Fixed QTrainer (original with proper indexing)
 class QTrainer:
-    def __init__(self, model, lr, gamma):
-        self.lr = lr
+    def __init__(self, model, learning_rate, gamma):
+        self.learning_rate = learning_rate
         self.gamma = gamma
         self.model = model
-        self.optimizer = optim.Adam(model.parameters(), lr=self.lr)
+        self.optimizer = optim.Adam(model.parameters(), lr=self.learning_rate)
         self.criterion = nn.MSELoss()
 
     def train_step(self, state, action, reward, next_state, done):
