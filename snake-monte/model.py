@@ -30,7 +30,7 @@ class MonteCarloTrainer:
         self.learning_rate = learning_rate
         self.gamma = gamma
         self.model = model
-        self.optimizer = optim.Adam(model.parameters(), learning_rate=self.learning_rate)
+        self.optimizer = optim.Adam(model.parameters(), lr=self.learning_rate)
         self.criterion = nn.MSELoss()
         
         # Store episode data

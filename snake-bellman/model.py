@@ -24,7 +24,7 @@ class Linear_QNet(nn.Module):
         torch.save(self.state_dict(), file_name)
 
 
-class QTrainer:
+class BellmanTrainer:
     def __init__(self, model, learning_rate, gamma):
         self.learning_rate = learning_rate
         self.gamma = gamma

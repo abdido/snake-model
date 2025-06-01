@@ -3,7 +3,7 @@ import random
 import numpy as np
 from collections import deque
 from game import SnakeGameAI, Direction, Point
-from model import Linear_QNet, QTrainer
+from model import Linear_QNet, BellmanTrainer
 from helper import plot
 import time
 
@@ -18,11 +18,11 @@ class Agent:
         self.epsilon = 0
         self.epsilon_max = 1.0
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.005  # Semakin kecil = semakin lambat turun
-        self.gamma = 0.9  # discount rate
+        self.epsilon_decay = 0.005 
+        self.gamma = 0.9
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         self.model = Linear_QNet(11, 256, 3)
-        self.trainer = QTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
+        self.trainer = BellmanTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
 
 
     def get_state(self, game):
@@ -124,61 +124,54 @@ def train():
     print('Training started...')
     
 
-    while True:
-        # get old state
-        state_old = agent.get_state(game)
+    try:
+        while True:
+            state_old = agent.get_state(game)
+            final_move = agent.get_action(state_old)
+            reward, done, score = game.play_step(final_move)
+            state_new = agent.get_state(game)
 
-        # get move
-        final_move = agent.get_action(state_old)
+            agent.train_short_memory(state_old, final_move, reward, state_new, done)
+            agent.remember(state_old, final_move, reward, state_new, done)
 
-        # perform move and get new state
-        reward, done, score = game.play_step(final_move)
-        state_new = agent.get_state(game)
+            if done:
+                game.reset()
+                agent.n_games += 1
+                agent.train_long_memory()
+                cumulative_scores += score
+                running_time = time.time() - start_time
 
-        # train short memory
-        agent.train_short_memory(state_old, final_move, reward, state_new, done)
+                if score > record:
+                    record = score
+                    agent.model.save()
+                    record_on = agent.n_games
 
-        # remember
-        agent.remember(state_old, final_move, reward, state_new, done)
+                if running_time > longest_time:
+                    longest_time = running_time
+                    time_on = agent.n_games
 
-        if done:
-            # train long memory, plot result
-            game.reset()
-            agent.n_games += 1
-            agent.train_long_memory()
-            cumulative_scores += score
-            running_time = time.time() - start_time
+                plot_scores.append(score)
+                mean_score = cumulative_scores / agent.n_games
+                plot_mean_scores.append(mean_score)
+                plot(plot_scores, plot_mean_scores)
 
-            if score > record:
-                record = score
-                agent.model.save()
-                record_on = agent.n_games
+                print(
+                    'Monte Carlo Learning',
+                    '\nEpisode:', agent.n_games,
+                    '\nScore', score,
+                    '\nHigh Score:', record, 'pada episode ke-', record_on,
+                    '\nAll Scores:', cumulative_scores,
+                    '\nMean Score:', mean_score,
+                    '\nEpsilon:', agent.epsilon,
+                    '\nTime:', running_time,
+                    '\nLongest Time:', longest_time, 'pada episode ke-', time_on,
+                    '\n')
 
-            if running_time > longest_time:
-                longest_time = running_time
-                time_on = agent.n_games
+                running_time = 0
+                start_time = time.time()
 
-
-            plot_scores.append(score)
-            mean_score = cumulative_scores / agent.n_games
-            plot_mean_scores.append(mean_score)
-            plot(plot_scores, plot_mean_scores)
-
-            print(
-                'Bellman Learning',
-                '\nEpisode:', agent.n_games,
-                '\nScore', score, 
-                '\nHigh Score:', record, 'pada episode ke-', record_on,\
-                '\nAll Scores:', cumulative_scores,
-                '\nMean Score:', mean_score, 
-                '\nEpsilon:', agent.epsilon, 
-                '\nTime:', running_time,
-                '\nLongest Time:', longest_time, 'pada episode ke-', time_on,
-                '\n')
-            
-            running_time = 0
-            start_time = time.time()
-            time.sleep(0.5)
+    except KeyboardInterrupt:
+        print("Training interrupted by user.")
 
 
 if __name__ == '__main__':

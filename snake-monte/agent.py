@@ -3,7 +3,7 @@ import random
 import numpy as np
 from collections import deque
 from game import SnakeGameAI, Direction, Point
-from model import Linear_QNet, QTrainer
+from model import Linear_QNet, MonteCarloTrainer
 from helper import plot
 import time
 import pygame
@@ -19,11 +19,11 @@ class Agent:
         self.epsilon = 0
         self.epsilon_max = 1.0
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.005 # Semakin kecil = semakin lambat turun
-        self.gamma = 0.9  # discount rate
+        self.epsilon_decay = 0.005 
+        self.gamma = 0.9 
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         self.model = Linear_QNet(11, 256, 3)
-        self.trainer = QTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
+        self.trainer = MonteCarloTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
 
     def get_state(self, game):
         head = game.snake[0]
@@ -155,13 +155,9 @@ def train():
 
                 running_time = 0
                 start_time = time.time()
-                pygame.time.delay(500)  # lebih aman daripada time.sleep()
 
     except KeyboardInterrupt:
         print("Training interrupted by user.")
-    finally:
-        pygame.quit()
-        sys.exit()
 
 if __name__ == '__main__':
     train()
