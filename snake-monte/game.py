@@ -24,7 +24,7 @@ BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
 
 BLOCK_SIZE = 20
-SPEED = 20
+SPEED = 40
 
 class SnakeGameAI:
 
@@ -68,18 +68,30 @@ class SnakeGameAI:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-        
+
+        # Hitung jarak ke food sebelum bergerak
+        prev_distance = abs(self.head.x - self.food.x) + abs(self.head.y - self.food.y)
+
         # 2. move
-        self._move(action) # update the head
+        self._move(action)  # update the head
         self.snake.insert(0, self.head)
-        
+
         # 3. check if game over
         reward = 0
         game_over = False
-        if self.is_collision() or self.frame_iteration > 100*len(self.snake):
+        if self.is_collision() or self.frame_iteration > 100 * len(self.snake):
             game_over = True
             reward = -10
             return reward, game_over, self.score
+
+        # Hitung jarak ke food setelah bergerak
+        new_distance = abs(self.head.x - self.food.x) + abs(self.head.y - self.food.y)
+
+        # Tambahkan reward berdasarkan jarak
+        if new_distance < prev_distance:
+            reward += 0.1  # lebih dekat ke makanan
+        else:
+            reward -= 0.1  # menjauh dari makanan
 
         # 4. place new food or just move
         if self.head == self.food:
@@ -88,10 +100,12 @@ class SnakeGameAI:
             self._place_food()
         else:
             self.snake.pop()
-        
+            reward -= 0.05  # Penalti kecil karena hanya gerak
+
         # 5. update ui and clock
         self._update_ui()
         self.clock.tick(SPEED)
+
         # 6. return game over and score
         return reward, game_over, self.score
 

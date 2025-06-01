@@ -16,9 +16,10 @@ LEARNING_RATE = 0.001
 class Agent:
     def __init__(self):
         self.n_games = 0
-        self.epsilon_max = 80
+        self.epsilon = 0
+        self.epsilon_max = 1.0
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.01  # Semakin kecil = semakin lambat turun
+        self.epsilon_decay = 0.005 # Semakin kecil = semakin lambat turun
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         self.model = Linear_QNet(11, 256, 3)
@@ -81,8 +82,7 @@ class Agent:
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, state):
-        self.epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * \
-                       np.exp(-self.epsilon_decay * self.n_games)
+        self.epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * np.exp(-self.epsilon_decay * self.n_games)
 
         final_move = [0, 0, 0]
         if random.random() < self.epsilon:
