@@ -170,7 +170,7 @@ def train(load_previous=False, save_interval=100):
                 plot(plot_scores, plot_mean_scores)
 
                 print(
-                    'Monte Carlo Learning',
+                    'Bellman Learning',
                     '\nEpisode:', agent.n_games,
                     '\nScore', score,
                     '\nHigh Score:', record, 'pada episode ke-', record_on,
