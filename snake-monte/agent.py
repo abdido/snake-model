@@ -6,7 +6,6 @@ from game import SnakeGameAI, Direction, Point
 from model import Linear_QNet, MonteCarloTrainer
 from helper import plot
 import time
-import pygame
 import sys
 
 MAX_MEMORY = 100_000
@@ -14,7 +13,7 @@ BATCH_SIZE = 1000
 LEARNING_RATE = 0.001
 
 class Agent:
-    def __init__(self):
+    def __init__(self, load_model=False):
         self.n_games = 0
         self.epsilon = 0
         self.epsilon_max = 1.0
@@ -24,6 +23,10 @@ class Agent:
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         self.model = Linear_QNet(11, 256, 3)
         self.trainer = MonteCarloTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
+        
+        # Load model if specified
+        if load_model:
+            self.load_model()
 
     def get_state(self, game):
         head = game.snake[0]
@@ -96,19 +99,40 @@ class Agent:
 
         return final_move
 
-def train():
+    def save_model(self, filename='monteCarloBestModel.pth'):
+        """Save model using trainer's save_model method"""
+        return self.trainer.save_model(filename)
+
+    def load_model(self, filename='monteCarloBestModel.pth'):
+        """Load model using trainer's load_model method"""
+        return self.trainer.load_model(filename)
+
+def train(load_previous=False, save_interval=100):
     plot_scores = []
     plot_mean_scores = []
     cumulative_scores = 0
     record = 0
     record_on = 0
-    agent = Agent()
+    
+    # Initialize agent with option to load previous model
+    agent = Agent(load_model=load_previous)
     game = SnakeGameAI()
     start_time = time.time()
     longest_time = 0
     time_on = 0
 
     print('Training started...')
+    if load_previous:
+        print('Loading previous model...')
+        agent.load_model('monteCarloModel.pth')
+        print(f'Continuing from episode {agent.n_games}')
+    else:
+        print('Starting new training session...')
+        print('Press Ctrl+C to stop training and save progress.')
+        print('Training will save checkpoints every', save_interval, 'episodes.')
+        print('Use "python agent.py play" to play with the trained model.')
+
+
 
     try:
         while True:
@@ -129,8 +153,12 @@ def train():
 
                 if score > record:
                     record = score
-                    agent.model.save()
+                    agent.save_model('monteCarloBestModel.pth')  # Use agent's save_model method
                     record_on = agent.n_games
+
+                # Save checkpoint every N episodes using trainer's save_model
+                if agent.n_games % save_interval == 0:
+                    agent.trainer.save_model(f'checkpoint_episode_{agent.n_games}.pth')
 
                 if running_time > longest_time:
                     longest_time = running_time
@@ -158,6 +186,17 @@ def train():
 
     except KeyboardInterrupt:
         print("Training interrupted by user.")
+        agent.trainer.save_model('monteCarloModel.pth')
+        print("Progress saved!")
+
 
 if __name__ == '__main__':
-    train()
+    # Pilihan untuk training atau bermain
+    import sys
+    
+    if len(sys.argv) > 1 and sys.argv[1] == 'play':
+        train(load_previous=False)
+    elif len(sys.argv) > 1 and sys.argv[1] == 'continue':
+        train(load_previous=True)
+    else:
+        train()  # Training baru

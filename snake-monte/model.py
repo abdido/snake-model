@@ -1,10 +1,10 @@
+from collections import deque
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import os
 import numpy as np
-from collections import deque
 
 class Linear_QNet(nn.Module):
     def __init__(self, input_size, hidden_size, output_size):
@@ -14,8 +14,7 @@ class Linear_QNet(nn.Module):
 
     def forward(self, x):
         x = F.relu(self.linear1(x))
-        x = self.linear2(x)
-        return x
+        return self.linear2(x)
 
     def save(self, file_name='model.pth'):
         model_folder_path = './model'
@@ -32,267 +31,259 @@ class MonteCarloTrainer:
         self.model = model
         self.optimizer = optim.Adam(model.parameters(), lr=self.learning_rate)
         self.criterion = nn.MSELoss()
-        
-        # Store episode data
         self.episode_memory = []
+        self.n_games = 0
+        self.epsilon = 1.0  # Start with high exploration
+        self.epsilon_min = 0.01
+        self.epsilon_decay = 0.005   # Decay rate for epsilon
+        # self.memory = deque(maxlen=100_000)  # Memory for experiences
+
         
+
     def store_experience(self, state, action, reward):
-        """Store experience for current episode"""
+        # Ensure state is always stored as a consistent numpy array
+        if isinstance(state, torch.Tensor):
+            state = state.detach().numpy()
+        elif not isinstance(state, np.ndarray):
+            state = np.array(state)
+        
+        # Flatten state to ensure consistency
+        state = state.flatten()
+        
         self.episode_memory.append({
             'state': state,
             'action': action,
             'reward': reward
         })
-    
+
     def calculate_returns(self, rewards):
-        """Calculate discounted returns"""
+        """Calculate discounted returns using Monte Carlo method"""
         returns = []
         G = 0
         for reward in reversed(rewards):
             G = reward + self.gamma * G
             returns.insert(0, G)
         return returns
-    
+
     def train_episode(self):
-        """Train on complete episode using Monte Carlo"""
         if len(self.episode_memory) == 0:
             return 0
-        
-        # Extract data from episode
+
+        # Extract data from episode memory
         states = []
         actions = []
         rewards = []
-        
+
         for experience in self.episode_memory:
             states.append(experience['state'])
             actions.append(experience['action'])
             rewards.append(experience['reward'])
-        
-        # Calculate returns
+
+        # Calculate returns for Monte Carlo
         returns = self.calculate_returns(rewards)
-        
-        # Convert to tensors
-        states = torch.tensor(np.array(states), dtype=torch.float)
-        actions = torch.tensor(np.array(actions), dtype=torch.long)
-        returns_tensor = torch.tensor(returns, dtype=torch.float)
-        
-        # Handle single vs batch
-        if len(states.shape) == 1:
-            states = torch.unsqueeze(states, 0)
-            actions = torch.unsqueeze(actions, 0)
-            returns_tensor = torch.unsqueeze(returns_tensor, 0)
-        
-        # Get current Q-value predictions
+
+        # Convert to tensors - now states should have consistent shape
+        try:
+            states = torch.tensor(np.array(states), dtype=torch.float32)
+            actions = torch.tensor(np.array(actions), dtype=torch.long)
+            returns_tensor = torch.tensor(returns, dtype=torch.float32)
+        except ValueError as e:
+            print(f"Error creating tensors: {e}")
+            print(f"States shapes: {[s.shape if hasattr(s, 'shape') else len(s) for s in states]}")
+            self.episode_memory = []
+            return 0
+
+        # Ensure proper dimensions
+        if states.dim() == 1:
+            states = states.unsqueeze(0)
+        if actions.dim() == 0:
+            actions = actions.unsqueeze(0)
+        if returns_tensor.dim() == 0:
+            returns_tensor = returns_tensor.unsqueeze(0)
+
+        # Forward pass
         pred_q_values = self.model(states)
-        target_q_values = pred_q_values.clone()
-        
-        # Update Q-values for taken actions with actual returns
+        target_q_values = pred_q_values.clone().detach()
+
+        # Update Q-values with Monte Carlo returns
         for idx in range(len(actions)):
-            # Find which action was taken (convert one-hot to index)
-            if len(actions[idx].shape) > 0:  # One-hot encoded
-                action_idx = torch.argmax(actions[idx]).item()
-            else:  # Already an index
-                action_idx = actions[idx].item()
-            
+            action_idx = actions[idx].item()
             target_q_values[idx][action_idx] = returns_tensor[idx]
-        
-        # Training step
+
+        # Backward pass
         self.optimizer.zero_grad()
-        loss = self.criterion(target_q_values, pred_q_values)
+        loss = self.criterion(pred_q_values, target_q_values)
         loss.backward()
         self.optimizer.step()
-        
-        # Clear episode memory
+
+        # Clear episode memory after training
         self.episode_memory = []
-        
-        return loss.item()
-    
-    def train_step(self, state, action, reward, next_state, done):
-        """Modified train_step for compatibility with existing code"""
-        # Convert inputs to proper format
-        state = torch.tensor(np.array(state), dtype=torch.float)
-        next_state = torch.tensor(np.array(next_state), dtype=torch.float)
-        action = torch.tensor(np.array(action), dtype=torch.long)
-        reward = torch.tensor(np.array(reward), dtype=torch.float)
-        
-        # Handle single sample
-        if len(state.shape) == 1:
-            state = torch.unsqueeze(state, 0)
-            next_state = torch.unsqueeze(next_state, 0)
-            action = torch.unsqueeze(action, 0)
-            reward = torch.unsqueeze(reward, 0)
-            done = (done,)
-        
-        # For Monte Carlo, we need the full episode
-        # This is a simplified version that still works step by step
-        # but uses Monte Carlo concept
-        
-        # Store current transition
-        self.store_experience(state.squeeze().numpy(), action.squeeze().numpy(), reward.item())
-        
-        # If episode is done, train on the full episode
-        if done[0]:
-            return self.train_episode()
-        
-        return 0  # No training until episode is done
-
-class HybridTrainer:
-    """Hybrid approach: Short memory (Bellman) + Long memory (Monte Carlo)"""
-    
-    def __init__(self, model, learning_rate, gamma):
-        self.learning_rate = learning_rate
-        self.gamma = gamma
-        self.model = model
-        self.optimizer = optim.Adam(model.parameters(), learning_rate=self.learning_rate)
-        self.criterion = nn.MSELoss()
-        
-        # Episode memory for Monte Carlo
-        self.episode_memory = []
-        
-    def train_step(self, state, action, reward, next_state, done):
-        """Immediate training using Bellman equation (for compatibility)"""
-        state = torch.tensor(np.array(state), dtype=torch.float)
-        next_state = torch.tensor(np.array(next_state), dtype=torch.float)
-        action = torch.tensor(np.array(action), dtype=torch.long)
-        reward = torch.tensor(np.array(reward), dtype=torch.float)
-        
-        if len(state.shape) == 1:
-            state = torch.unsqueeze(state, 0)
-            next_state = torch.unsqueeze(next_state, 0)
-            action = torch.unsqueeze(action, 0)
-            reward = torch.unsqueeze(reward, 0)
-            done = (done,)
-        
-        # Store for Monte Carlo training later
-        self.episode_memory.append({
-            'state': state.squeeze().numpy(),
-            'action': action.squeeze().numpy(), 
-            'reward': reward.item()
-        })
-        
-        # Traditional Q-learning for immediate feedback
-        pred = self.model(state)
-        target = pred.clone()
-        
-        for idx in range(len(done)):
-            Q_new = reward[idx]
-            if not done[idx]:
-                Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
-            
-            # Handle action indexing properly
-            if len(action[idx].shape) > 0:  # One-hot or multi-dim
-                if action[idx].dim() == 0:  # Single value
-                    action_idx = action[idx].item()
-                else:  # One-hot or array
-                    action_idx = torch.argmax(action[idx]).item()
-            else:
-                action_idx = action[idx].item()
-            
-            target[idx][action_idx] = Q_new
-        
-        self.optimizer.zero_grad()
-        loss = self.criterion(target, pred)
-        loss.backward()
-        self.optimizer.step()
-        
-        return loss.item()
-    
-    def train_long_memory(self, memory):
-        """Train using Monte Carlo on stored episodes"""
-        if len(memory) == 0:
-            return
-        
-        # Sample from memory
-        batch = memory
-        states, actions, rewards, next_states, dones = zip(*batch)
-        
-        # Calculate Monte Carlo returns for each trajectory
-        returns_list = []
-        current_return = 0
-        
-        # Process in reverse order to calculate returns
-        for i in reversed(range(len(rewards))):
-            if dones[i]:  # End of episode
-                current_return = rewards[i]
-            else:
-                current_return = rewards[i] + self.gamma * current_return
-            returns_list.insert(0, current_return)
-        
-        # Convert to tensors
-        states = torch.tensor(np.array(states), dtype=torch.float)
-        actions = torch.tensor(np.array(actions), dtype=torch.long)
-        returns_tensor = torch.tensor(returns_list, dtype=torch.float)
-        
-        # Training
-        pred_q_values = self.model(states)
-        target_q_values = pred_q_values.clone()
-        
-        for idx in range(len(actions)):
-            # Handle action indexing
-            if len(actions[idx].shape) > 0:
-                action_idx = torch.argmax(actions[idx]).item()
-            else:
-                action_idx = actions[idx].item()
-            
-            target_q_values[idx][action_idx] = returns_tensor[idx]
-        
-        self.optimizer.zero_grad()
-        loss = self.criterion(target_q_values, pred_q_values)
-        loss.backward()
-        self.optimizer.step()
-
-# Fixed QTrainer (original with proper indexing)
-class QTrainer:
-    def __init__(self, model, learning_rate, gamma):
-        self.learning_rate = learning_rate
-        self.gamma = gamma
-        self.model = model
-        self.optimizer = optim.Adam(model.parameters(), lr=self.learning_rate)
-        self.criterion = nn.MSELoss()
-
-    def train_step(self, state, action, reward, next_state, done):
-        state = torch.tensor(np.array(state), dtype=torch.float)
-        next_state = torch.tensor(np.array(next_state), dtype=torch.float)
-        action = torch.tensor(np.array(action), dtype=torch.long)
-        reward = torch.tensor(np.array(reward), dtype=torch.float)
-
-        if len(state.shape) == 1:
-            state = torch.unsqueeze(state, 0)
-            next_state = torch.unsqueeze(next_state, 0)
-            action = torch.unsqueeze(action, 0)
-            reward = torch.unsqueeze(reward, 0)
-            done = (done, )
-
-        pred = self.model(state)
-        target = pred.clone()
-        
-        for idx in range(len(done)):
-            Q_new = reward[idx]
-            if not done[idx]:
-                Q_new = reward[idx] + self.gamma * torch.max(self.model(next_state[idx]))
-
-            # FIX: Proper action indexing
-            if action[idx].dim() == 0:  # Single scalar
-                action_idx = action[idx].item()
-            else:  # Array/tensor with multiple elements
-                action_idx = torch.argmax(action[idx]).item()
-            
-            target[idx][action_idx] = Q_new
-    
-        self.optimizer.zero_grad()
-        loss = self.criterion(target, pred)
-        loss.backward()
-        self.optimizer.step()
-        
         return loss.item()
 
-# Debug function
-def debug_tensor_shapes(state, action, reward, next_state, done):
-    """Debug function to check tensor shapes"""
-    print("=== DEBUGGING TENSOR SHAPES ===")
-    print(f"state: {np.array(state).shape} - {type(state)}")
-    print(f"action: {np.array(action).shape} - {type(action)} - {action}")
-    print(f"reward: {reward} - {type(reward)}")
-    print(f"next_state: {np.array(next_state).shape} - {type(next_state)}")
-    print(f"done: {done} - {type(done)}")
-    print("================================")
+    def train_step(self, state, action, reward, next_state, done):
+        """Store experience and train if episode is done"""
+        
+        # Handle batch vs single experience
+        is_batch = isinstance(state, (list, tuple)) or (hasattr(state, 'shape') and len(state.shape) > 1 and state.shape[0] > 1)
+        
+        if is_batch:
+            # Batch processing - store multiple experiences
+            states = state if isinstance(state, (list, tuple)) else state
+            actions = action if isinstance(action, (list, tuple)) else action
+            rewards = reward if isinstance(reward, (list, tuple)) else reward
+            dones = done if isinstance(done, (list, tuple)) else [done]
+            
+            for i in range(len(states)):
+                # Convert single state
+                if isinstance(states[i], torch.Tensor):
+                    state_np = states[i].detach().numpy().flatten()
+                else:
+                    state_np = np.array(states[i]).flatten()
+                
+                # Convert single action
+                if isinstance(actions[i], torch.Tensor):
+                    if actions[i].dim() > 0 and actions[i].numel() > 1:
+                        action_value = torch.argmax(actions[i]).item()
+                    else:
+                        action_value = actions[i].item()
+                else:
+                    if hasattr(actions[i], '__len__') and len(actions[i]) > 1:
+                        action_value = np.argmax(actions[i])
+                    else:
+                        action_value = int(actions[i])
+                
+                # Convert single reward
+                if isinstance(rewards[i], torch.Tensor):
+                    reward_value = rewards[i].item() if rewards[i].numel() == 1 else rewards[i].mean().item()
+                elif isinstance(rewards[i], (tuple, list)):
+                    reward_value = float(rewards[i][0]) if len(rewards[i]) > 0 else 0.0
+                else:
+                    reward_value = float(rewards[i])
+                
+                # Store experience
+                self.store_experience(state_np, action_value, reward_value)
+                
+                # Train if this episode is done
+                if i < len(dones) and dones[i]:
+                    return self.train_episode()
+            
+            return 0
+        
+        else:
+            # Single experience processing
+            # Convert inputs to proper format
+            if isinstance(state, torch.Tensor):
+                state_np = state.detach().numpy().flatten()
+            else:
+                state_np = np.array(state).flatten()
+
+            # Handle action conversion
+            if isinstance(action, torch.Tensor):
+                if action.dim() > 0 and action.numel() > 1:
+                    action_value = torch.argmax(action).item()
+                else:
+                    action_value = action.item()
+            else:
+                if hasattr(action, '__len__') and len(action) > 1:
+                    action_value = np.argmax(action)
+                else:
+                    action_value = int(action)
+
+            # Handle reward conversion
+            if isinstance(reward, torch.Tensor):
+                reward_value = reward.item() if reward.numel() == 1 else reward.mean().item()
+            elif isinstance(reward, (tuple, list)):
+                reward_value = float(reward[0]) if len(reward) > 0 else 0.0
+            else:
+                reward_value = float(reward)
+
+            # Store experience
+            self.store_experience(state_np, action_value, reward_value)
+
+            # Train episode if done
+            if done:
+                return self.train_episode()
+
+            return 0
+    
+    # def save_model(self, file_name='model.pth'):
+    #     """Save the model state dict"""
+    #     model_folder_path = './model'
+    #     if not os.path.exists(model_folder_path):
+    #         os.makedirs(model_folder_path)
+
+    #     file_name = os.path.join(model_folder_path, file_name)
+    #     torch.save(self.model.state_dict(), file_name)
+    
+    def save_model(self, filename='monteCarloModel.pth'):
+        """Save the current model"""
+        model_folder_path = './model'
+        if not os.path.exists(model_folder_path):
+            os.makedirs(model_folder_path)
+        
+        file_path = os.path.join(model_folder_path, filename)
+        torch.save({
+            'model_state_dict': self.model.state_dict(),
+            'n_games': self.n_games,
+            'epsilon': self.epsilon
+        }, file_path)
+        print(f"Model saved to {file_path}")
+
+    def load_model(self, filename='monteCarloModel.pth'):
+        """Load a saved model"""
+        model_folder_path = './model'
+        file_path = os.path.join(model_folder_path, filename)
+        
+        if os.path.exists(file_path):
+            checkpoint = torch.load(file_path)
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+            
+            # Optionally load training progress
+            if 'n_games' in checkpoint:
+                self.n_games = checkpoint['n_games']
+            if 'epsilon' in checkpoint:
+                self.epsilon = checkpoint['epsilon']
+                
+            print(f"Model loaded from {file_path}")
+            print(f"Resumed from episode: {self.n_games}")
+            return True
+        else:
+            print(f"No model found at {file_path}")
+            return False
+
+    def save_checkpoint(self, filename='monteCarloCheckpoint.pth'):
+        """Save training checkpoint including memory"""
+        model_folder_path = './model'
+        if not os.path.exists(model_folder_path):
+            os.makedirs(model_folder_path)
+        
+        file_path = os.path.join(model_folder_path, filename)
+        torch.save({
+            'model_state_dict': self.model.state_dict(),
+            'n_games': self.n_games,
+            'epsilon': self.epsilon,
+            'memory': list(self.memory)  # Convert deque to list for saving
+        }, file_path)
+        print(f"Checkpoint saved to {file_path}")
+
+    def load_checkpoint(self, filename='monteCarloCheckpoint.pth'):
+        """Load training checkpoint including memory"""
+        model_folder_path = './model'
+        file_path = os.path.join(model_folder_path, filename)
+        
+        if os.path.exists(file_path):
+            checkpoint = torch.load(file_path)
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+            self.n_games = checkpoint['n_games']
+            self.epsilon = checkpoint['epsilon']
+            
+            # Restore memory if available
+            if 'memory' in checkpoint:
+                self.memory = deque(checkpoint['memory'], maxlen=MAX_MEMORY)
+                
+            print(f"Checkpoint loaded from {file_path}")
+            print(f"Resumed from episode: {self.n_games}")
+            return True
+        else:
+            print(f"No checkpoint found at {file_path}")
+            return False

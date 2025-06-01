@@ -1,3 +1,4 @@
+from collections import deque
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -31,6 +32,10 @@ class BellmanTrainer:
         self.model = model
         self.optimizer = optim.Adam(model.parameters(), lr=self.learning_rate)
         self.criterion = nn.MSELoss()
+        self.n_games = 0
+        self.epsilon = 1.0  # Start with high exploration
+        self.epsilon_min = 0.01
+        self.epsilon_decay = 0.005
 
     def train_step(self, state, action, reward, next_state, done):
         state = torch.tensor(state, dtype=torch.float)
@@ -67,5 +72,76 @@ class BellmanTrainer:
 
         self.optimizer.step()
 
+    def save_model(self, filename='bellmanModel.pth'):
+        """Save the current model"""
+        model_folder_path = './model'
+        if not os.path.exists(model_folder_path):
+            os.makedirs(model_folder_path)
+        
+        file_path = os.path.join(model_folder_path, filename)
+        torch.save({
+            'model_state_dict': self.model.state_dict(),
+            'n_games': self.n_games,
+            'epsilon': self.epsilon
+        }, file_path)
+        print(f"Model saved to {file_path}")
 
+    def load_model(self, filename='bellmanModel.pth'):
+        """Load a saved model"""
+        model_folder_path = './model'
+        file_path = os.path.join(model_folder_path, filename)
+        
+        if os.path.exists(file_path):
+            checkpoint = torch.load(file_path)
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+            
+            # Optionally load training progress
+            if 'n_games' in checkpoint:
+                self.n_games = checkpoint['n_games']
+            if 'epsilon' in checkpoint:
+                self.epsilon = checkpoint['epsilon']
+                
+            print(f"Model loaded from {file_path}")
+            print(f"Resumed from episode: {self.n_games}")
+            return True
+        else:
+            print(f"No model found at {file_path}")
+            return False
+
+    def save_checkpoint(self, filename='bellmanCheckpoint.pth'):
+        """Save training checkpoint including memory"""
+        model_folder_path = './model'
+        if not os.path.exists(model_folder_path):
+            os.makedirs(model_folder_path)
+        
+        file_path = os.path.join(model_folder_path, filename)
+        torch.save({
+            'model_state_dict': self.model.state_dict(),
+            'n_games': self.n_games,
+            'epsilon': self.epsilon,
+            'memory': list(self.memory)  # Convert deque to list for saving
+        }, file_path)
+        print(f"Checkpoint saved to {file_path}")
+
+    def load_checkpoint(self, filename='bellmanCheckpoint.pth'):
+        """Load training checkpoint including memory"""
+        model_folder_path = './model'
+        file_path = os.path.join(model_folder_path, filename)
+        
+        if os.path.exists(file_path):
+            checkpoint = torch.load(file_path)
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+            self.n_games = checkpoint['n_games']
+            self.epsilon = checkpoint['epsilon']
+            
+            # Restore memory if available
+            if 'memory' in checkpoint:
+                self.memory = deque(checkpoint['memory'], maxlen=MAX_MEMORY)
+                
+            print(f"Checkpoint loaded from {file_path}")
+            print(f"Resumed from episode: {self.n_games}")
+            return True
+        else:
+            print(f"No checkpoint found at {file_path}")
+            return False
 

@@ -6,24 +6,27 @@ from game import SnakeGameAI, Direction, Point
 from model import Linear_QNet, BellmanTrainer
 from helper import plot
 import time
+import sys
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
 LEARNING_RATE = 0.001
-waktu = time.gmtime(8)
 
 class Agent:
-    def __init__(self):
+    def __init__(self, load_model=False):
         self.n_games = 0
         self.epsilon = 0
         self.epsilon_max = 1.0
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.005 
-        self.gamma = 0.9
+        self.gamma = 0.9 
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         self.model = Linear_QNet(11, 256, 3)
         self.trainer = BellmanTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
-
+        
+        # Load model if specified
+        if load_model:
+            self.load_model()
 
     def get_state(self, game):
         head = game.snake[0]
@@ -31,70 +34,58 @@ class Agent:
         point_r = Point(head.x + 20, head.y)
         point_u = Point(head.x, head.y - 20)
         point_d = Point(head.x, head.y + 20)
-        
+
         dir_l = game.direction == Direction.LEFT
         dir_r = game.direction == Direction.RIGHT
         dir_u = game.direction == Direction.UP
         dir_d = game.direction == Direction.DOWN
 
         state = [
-            # Danger straight
-            (dir_r and game.is_collision(point_r)) or 
-            (dir_l and game.is_collision(point_l)) or 
-            (dir_u and game.is_collision(point_u)) or 
+            (dir_r and game.is_collision(point_r)) or
+            (dir_l and game.is_collision(point_l)) or
+            (dir_u and game.is_collision(point_u)) or
             (dir_d and game.is_collision(point_d)),
 
-            # Danger right
-            (dir_u and game.is_collision(point_r)) or 
-            (dir_d and game.is_collision(point_l)) or 
-            (dir_l and game.is_collision(point_u)) or 
+            (dir_u and game.is_collision(point_r)) or
+            (dir_d and game.is_collision(point_l)) or
+            (dir_l and game.is_collision(point_u)) or
             (dir_r and game.is_collision(point_d)),
 
-            # Danger left
-            (dir_d and game.is_collision(point_r)) or 
-            (dir_u and game.is_collision(point_l)) or 
-            (dir_r and game.is_collision(point_u)) or 
+            (dir_d and game.is_collision(point_r)) or
+            (dir_u and game.is_collision(point_l)) or
+            (dir_r and game.is_collision(point_u)) or
             (dir_l and game.is_collision(point_d)),
-            
-            # Move direction
+
             dir_l,
             dir_r,
             dir_u,
             dir_d,
-            
-            # Food location 
-            game.food.x < game.head.x,  # food left
-            game.food.x > game.head.x,  # food right
-            game.food.y < game.head.y,  # food up
-            game.food.y > game.head.y  # food down
-            ]
+
+            game.food.x < game.head.x,
+            game.food.x > game.head.x,
+            game.food.y < game.head.y,
+            game.food.y > game.head.y
+        ]
 
         return np.array(state, dtype=int)
 
     def remember(self, state, action, reward, next_state, done):
-        self.memory.append((state, action, reward, next_state, done)) # popleft if MAX_MEMORY is reached
+        self.memory.append((state, action, reward, next_state, done))
 
     def train_long_memory(self):
         if len(self.memory) > BATCH_SIZE:
-            mini_sample = random.sample(self.memory, BATCH_SIZE) # list of tuples
+            mini_sample = random.sample(self.memory, BATCH_SIZE)
         else:
             mini_sample = self.memory
 
         states, actions, rewards, next_states, dones = zip(*mini_sample)
         self.trainer.train_step(states, actions, rewards, next_states, dones)
-        #for state, action, reward, nexrt_state, done in mini_sample:
-        #    self.trainer.train_step(state, action, reward, next_state, done)
 
     def train_short_memory(self, state, action, reward, next_state, done):
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, state):
-        # Epsilon decay eksponensial
         self.epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * np.exp(-self.epsilon_decay * self.n_games)
-
-
-        # epsilon linear decay
-        # self.epsilon = max(self.epsilon_min, self.epsilon - self.epsilon_decay)
 
         final_move = [0, 0, 0]
         if random.random() < self.epsilon:
@@ -108,21 +99,40 @@ class Agent:
 
         return final_move
 
+    def save_model(self, filename='bellmanBestModel.pth'):
+        """Save model using trainer's save_model method"""
+        return self.trainer.save_model(filename)
 
-def train():
+    def load_model(self, filename='bellmanBestModel.pth'):
+        """Load model using trainer's load_model method"""
+        return self.trainer.load_model(filename)
+
+def train(load_previous=False, save_interval=100):
     plot_scores = []
     plot_mean_scores = []
     cumulative_scores = 0
     record = 0
     record_on = 0
-    agent = Agent()
+    
+    # Initialize agent with option to load previous model
+    agent = Agent(load_model=load_previous)
     game = SnakeGameAI()
     start_time = time.time()
     longest_time = 0
     time_on = 0
 
     print('Training started...')
-    
+    if load_previous:
+        print('Loading previous model...')
+        agent.load_model('bellmanModel.pth')
+        print(f'Continuing from episode {agent.n_games}')
+    else:
+        print('Starting new training session...')
+        print('Press Ctrl+C to stop training and save progress.')
+        print('Training will save checkpoints every', save_interval, 'episodes.')
+        print('Use "python agent.py play" to play with the trained model.')
+
+
 
     try:
         while True:
@@ -143,8 +153,12 @@ def train():
 
                 if score > record:
                     record = score
-                    agent.model.save()
+                    agent.save_model('bellmanBestModel.pth')  # Use agent's save_model method
                     record_on = agent.n_games
+
+                # Save checkpoint every N episodes using trainer's save_model
+                if agent.n_games % save_interval == 0:
+                    agent.trainer.save_model(f'checkpoint_episode_{agent.n_games}.pth')
 
                 if running_time > longest_time:
                     longest_time = running_time
@@ -172,7 +186,17 @@ def train():
 
     except KeyboardInterrupt:
         print("Training interrupted by user.")
+        agent.trainer.save_model('bellmanModel.pth')
+        print("Progress saved!")
 
 
 if __name__ == '__main__':
-    train()
+    # Pilihan untuk training atau bermain
+    import sys
+    
+    if len(sys.argv) > 1 and sys.argv[1] == 'play':
+        train(load_previous=False)
+    elif len(sys.argv) > 1 and sys.argv[1] == 'continue':
+        train(load_previous=True)
+    else:
+        train()  # Training baru
