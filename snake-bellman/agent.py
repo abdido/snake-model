@@ -13,13 +13,14 @@ BATCH_SIZE = 1000
 LEARNING_RATE = 0.001
 
 class Agent:
-    def __init__(self, load_model=False):
+    def __init__(self, load_model=True):
         self.n_games = 0
         self.epsilon = 0
         self.epsilon_max = 1.0
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.005 
-        self.gamma = 0.9 
+        # self.epsilon_decay = 0.005 
+        self.epsilon_decay = 0.01
+        self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         self.model = Linear_QNet(11, 256, 3)
         self.trainer = BellmanTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
@@ -27,6 +28,9 @@ class Agent:
         # Load model if specified
         if load_model:
             self.load_model()
+            print(self.n_games, 'games loaded from bellmanModel.pth')
+            print(self.epsilon, 'epsilon loaded from bellmanModel.pth')
+            
 
     def get_state(self, game):
         head = game.snake[0]
@@ -107,7 +111,7 @@ class Agent:
         """Load model using trainer's load_model method"""
         return self.trainer.load_model(filename)
 
-def train(load_previous=False, save_interval=100):
+def train(load_previous=True, save_interval=100):
     plot_scores = []
     plot_mean_scores = []
     cumulative_scores = 0

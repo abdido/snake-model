@@ -94,19 +94,39 @@ class BellmanTrainer:
         if os.path.exists(file_path):
             checkpoint = torch.load(file_path)
             self.model.load_state_dict(checkpoint['model_state_dict'])
+            print(f"Model loaded from {file_path}")
+            print(f"Resumed from episode: {checkpoint['n_games']}")
+            print(f"Epsilon: {checkpoint['epsilon']}")
+            self.n_games = checkpoint['n_games']
+            self.epsilon = checkpoint['epsilon']
+            return True
+            # success = self.load_model(filename)
+            # if success:
+            #     self.n_games = self.n_games
+            #     self.epsilon = self.epsilon
+            #     print(f"Model loaded from {file_path}")
+            #     return True
             
             # Optionally load training progress
-            if 'n_games' in checkpoint:
-                self.n_games = checkpoint['n_games']
-            if 'epsilon' in checkpoint:
-                self.epsilon = checkpoint['epsilon']
+            # if 'n_games' in checkpoint:
+            #     self.n_games = checkpoint['n_games']
+            # if 'epsilon' in checkpoint:
+            #     self.epsilon = checkpoint['epsilon']
                 
-            print(f"Model loaded from {file_path}")
-            print(f"Resumed from episode: {self.n_games}")
-            return True
+            # print(f"Model loaded from {file_path}")
+            # print(f"Resumed from episode: {self.n_games}")
+            # return True
         else:
             print(f"No model found at {file_path}")
             return False
+
+    # def load_model(self, filename='bellmanBestModel.pth'):
+    #     """Load model using trainer's load_model method"""
+    #     success = self.trainer.load_model(filename)
+    #     if success:
+    #         self.n_games = self.trainer.n_games
+    #         self.epsilon = self.trainer.epsilon
+    #     return success
 
     def save_checkpoint(self, filename='bellmanCheckpoint.pth'):
         """Save training checkpoint including memory"""
