@@ -18,7 +18,8 @@ class Agent:
         self.epsilon = 0
         self.epsilon_max = 1.0
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.005 
+        # self.epsilon_decay = 0.005 
+        self.epsilon_decay = 0.01 
         self.gamma = 0.9 
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         self.model = Linear_QNet(11, 256, 3)
