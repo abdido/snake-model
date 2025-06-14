@@ -33,21 +33,16 @@ class MonteCarloTrainer:
         self.criterion = nn.MSELoss()
         self.episode_memory = []
         self.n_games = 0
-        self.epsilon = 1.0  # Start with high exploration
+        self.epsilon = 1.0  
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.005   # Decay rate for epsilon
-        # self.memory = deque(maxlen=100_000)  # Memory for experiences
-
-        
+        self.epsilon_decay = 0.005 
 
     def store_experience(self, state, action, reward):
-        # Ensure state is always stored as a consistent numpy array
         if isinstance(state, torch.Tensor):
             state = state.detach().numpy()
         elif not isinstance(state, np.ndarray):
             state = np.array(state)
         
-        # Flatten state to ensure consistency
         state = state.flatten()
         
         self.episode_memory.append({
@@ -69,7 +64,6 @@ class MonteCarloTrainer:
         if len(self.episode_memory) == 0:
             return 0
 
-        # Extract data from episode memory
         states = []
         actions = []
         rewards = []
@@ -79,10 +73,8 @@ class MonteCarloTrainer:
             actions.append(experience['action'])
             rewards.append(experience['reward'])
 
-        # Calculate returns for Monte Carlo
         returns = self.calculate_returns(rewards)
 
-        # Convert to tensors - now states should have consistent shape
         try:
             states = torch.tensor(np.array(states), dtype=torch.float32)
             actions = torch.tensor(np.array(actions), dtype=torch.long)
@@ -93,7 +85,6 @@ class MonteCarloTrainer:
             self.episode_memory = []
             return 0
 
-        # Ensure proper dimensions
         if states.dim() == 1:
             states = states.unsqueeze(0)
         if actions.dim() == 0:
@@ -101,46 +92,38 @@ class MonteCarloTrainer:
         if returns_tensor.dim() == 0:
             returns_tensor = returns_tensor.unsqueeze(0)
 
-        # Forward pass
         pred_q_values = self.model(states)
         target_q_values = pred_q_values.clone().detach()
 
-        # Update Q-values with Monte Carlo returns
         for idx in range(len(actions)):
             action_idx = actions[idx].item()
             target_q_values[idx][action_idx] = returns_tensor[idx]
 
-        # Backward pass
         self.optimizer.zero_grad()
         loss = self.criterion(pred_q_values, target_q_values)
         loss.backward()
         self.optimizer.step()
 
-        # Clear episode memory after training
         self.episode_memory = []
         return loss.item()
 
     def train_step(self, state, action, reward, next_state, done):
         """Store experience and train if episode is done"""
         
-        # Handle batch vs single experience
         is_batch = isinstance(state, (list, tuple)) or (hasattr(state, 'shape') and len(state.shape) > 1 and state.shape[0] > 1)
         
         if is_batch:
-            # Batch processing - store multiple experiences
             states = state if isinstance(state, (list, tuple)) else state
             actions = action if isinstance(action, (list, tuple)) else action
             rewards = reward if isinstance(reward, (list, tuple)) else reward
             dones = done if isinstance(done, (list, tuple)) else [done]
             
             for i in range(len(states)):
-                # Convert single state
                 if isinstance(states[i], torch.Tensor):
                     state_np = states[i].detach().numpy().flatten()
                 else:
                     state_np = np.array(states[i]).flatten()
                 
-                # Convert single action
                 if isinstance(actions[i], torch.Tensor):
                     if actions[i].dim() > 0 and actions[i].numel() > 1:
                         action_value = torch.argmax(actions[i]).item()
@@ -152,7 +135,6 @@ class MonteCarloTrainer:
                     else:
                         action_value = int(actions[i])
                 
-                # Convert single reward
                 if isinstance(rewards[i], torch.Tensor):
                     reward_value = rewards[i].item() if rewards[i].numel() == 1 else rewards[i].mean().item()
                 elif isinstance(rewards[i], (tuple, list)):
@@ -160,24 +142,19 @@ class MonteCarloTrainer:
                 else:
                     reward_value = float(rewards[i])
                 
-                # Store experience
                 self.store_experience(state_np, action_value, reward_value)
                 
-                # Train if this episode is done
                 if i < len(dones) and dones[i]:
                     return self.train_episode()
             
             return 0
         
         else:
-            # Single experience processing
-            # Convert inputs to proper format
             if isinstance(state, torch.Tensor):
                 state_np = state.detach().numpy().flatten()
             else:
                 state_np = np.array(state).flatten()
 
-            # Handle action conversion
             if isinstance(action, torch.Tensor):
                 if action.dim() > 0 and action.numel() > 1:
                     action_value = torch.argmax(action).item()
@@ -189,7 +166,6 @@ class MonteCarloTrainer:
                 else:
                     action_value = int(action)
 
-            # Handle reward conversion
             if isinstance(reward, torch.Tensor):
                 reward_value = reward.item() if reward.numel() == 1 else reward.mean().item()
             elif isinstance(reward, (tuple, list)):
@@ -197,23 +173,12 @@ class MonteCarloTrainer:
             else:
                 reward_value = float(reward)
 
-            # Store experience
             self.store_experience(state_np, action_value, reward_value)
 
-            # Train episode if done
             if done:
                 return self.train_episode()
 
             return 0
-    
-    # def save_model(self, file_name='model.pth'):
-    #     """Save the model state dict"""
-    #     model_folder_path = './model'
-    #     if not os.path.exists(model_folder_path):
-    #         os.makedirs(model_folder_path)
-
-    #     file_name = os.path.join(model_folder_path, file_name)
-    #     torch.save(self.model.state_dict(), file_name)
     
     def save_model(self, filename='monteCarloModel.pth'):
         """Save the current model"""
@@ -238,7 +203,6 @@ class MonteCarloTrainer:
             checkpoint = torch.load(file_path)
             self.model.load_state_dict(checkpoint['model_state_dict'])
             
-            # Optionally load training progress
             if 'n_games' in checkpoint:
                 self.n_games = checkpoint['n_games']
             if 'epsilon' in checkpoint:
@@ -262,7 +226,7 @@ class MonteCarloTrainer:
             'model_state_dict': self.model.state_dict(),
             'n_games': self.n_games,
             'epsilon': self.epsilon,
-            'memory': list(self.memory)  # Convert deque to list for saving
+            'memory': list(self.memory) 
         }, file_path)
         print(f"Checkpoint saved to {file_path}")
 
@@ -277,7 +241,6 @@ class MonteCarloTrainer:
             self.n_games = checkpoint['n_games']
             self.epsilon = checkpoint['epsilon']
             
-            # Restore memory if available
             if 'memory' in checkpoint:
                 self.memory = deque(checkpoint['memory'], maxlen=MAX_MEMORY)
                 

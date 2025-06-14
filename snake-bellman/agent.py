@@ -117,8 +117,6 @@ def train(load_previous=True, save_interval=100):
     cumulative_scores = 0
     record = 0
     record_on = 0
-    
-    # Initialize agent with option to load previous model
     agent = Agent(load_model=load_previous)
     game = SnakeGameAI()
     start_time = time.time()
@@ -157,10 +155,9 @@ def train(load_previous=True, save_interval=100):
 
                 if score > record:
                     record = score
-                    agent.save_model('bellmanBestModel.pth')  # Use agent's save_model method
+                    agent.save_model('bellmanBestModel.pth') 
                     record_on = agent.n_games
 
-                # Save checkpoint every N episodes using trainer's save_model
                 if agent.n_games % save_interval == 0:
                     agent.trainer.save_model(f'checkpoint_episode_{agent.n_games}.pth')
 
@@ -195,12 +192,10 @@ def train(load_previous=True, save_interval=100):
 
 
 if __name__ == '__main__':
-    # Pilihan untuk training atau bermain
     import sys
-    
     if len(sys.argv) > 1 and sys.argv[1] == 'play':
         train(load_previous=False)
     elif len(sys.argv) > 1 and sys.argv[1] == 'continue':
         train(load_previous=True)
     else:
-        train()  # Training baru
+        train()

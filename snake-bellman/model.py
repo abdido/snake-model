@@ -33,7 +33,7 @@ class BellmanTrainer:
         self.optimizer = optim.Adam(model.parameters(), lr=self.learning_rate)
         self.criterion = nn.MSELoss()
         self.n_games = 0
-        self.epsilon = 1.0  # Start with high exploration
+        self.epsilon = 1.0 
         self.epsilon_min = 0.01
         self.epsilon_decay = 0.005
 
@@ -42,17 +42,14 @@ class BellmanTrainer:
         next_state = torch.tensor(next_state, dtype=torch.float)
         action = torch.tensor(action, dtype=torch.long)
         reward = torch.tensor(reward, dtype=torch.float)
-        # (n, x)
 
         if len(state.shape) == 1:
-            # (1, x)
             state = torch.unsqueeze(state, 0)
             next_state = torch.unsqueeze(next_state, 0)
             action = torch.unsqueeze(action, 0)
             reward = torch.unsqueeze(reward, 0)
             done = (done, )
 
-        # 1: predicted Q values with current state
         pred = self.model(state)
 
         target = pred.clone()
@@ -63,9 +60,6 @@ class BellmanTrainer:
 
             target[idx][torch.argmax(action[idx]).item()] = Q_new
     
-        # 2: Q_new = r + y * max(next_predicted Q value) -> only do this if not done
-        # pred.clone()
-        # preds[argmax(action)] = Q_new
         self.optimizer.zero_grad()
         loss = self.criterion(target, pred)
         loss.backward()
@@ -100,33 +94,9 @@ class BellmanTrainer:
             self.n_games = checkpoint['n_games']
             self.epsilon = checkpoint['epsilon']
             return True
-            # success = self.load_model(filename)
-            # if success:
-            #     self.n_games = self.n_games
-            #     self.epsilon = self.epsilon
-            #     print(f"Model loaded from {file_path}")
-            #     return True
-            
-            # Optionally load training progress
-            # if 'n_games' in checkpoint:
-            #     self.n_games = checkpoint['n_games']
-            # if 'epsilon' in checkpoint:
-            #     self.epsilon = checkpoint['epsilon']
-                
-            # print(f"Model loaded from {file_path}")
-            # print(f"Resumed from episode: {self.n_games}")
-            # return True
         else:
             print(f"No model found at {file_path}")
             return False
-
-    # def load_model(self, filename='bellmanBestModel.pth'):
-    #     """Load model using trainer's load_model method"""
-    #     success = self.trainer.load_model(filename)
-    #     if success:
-    #         self.n_games = self.trainer.n_games
-    #         self.epsilon = self.trainer.epsilon
-    #     return success
 
     def save_checkpoint(self, filename='bellmanCheckpoint.pth'):
         """Save training checkpoint including memory"""
@@ -139,7 +109,7 @@ class BellmanTrainer:
             'model_state_dict': self.model.state_dict(),
             'n_games': self.n_games,
             'epsilon': self.epsilon,
-            'memory': list(self.memory)  # Convert deque to list for saving
+            'memory': list(self.memory)  
         }, file_path)
         print(f"Checkpoint saved to {file_path}")
 
@@ -154,7 +124,6 @@ class BellmanTrainer:
             self.n_games = checkpoint['n_games']
             self.epsilon = checkpoint['epsilon']
             
-            # Restore memory if available
             if 'memory' in checkpoint:
                 self.memory = deque(checkpoint['memory'], maxlen=MAX_MEMORY)
                 
