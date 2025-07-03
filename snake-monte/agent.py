@@ -18,7 +18,7 @@ class Agent:
         self.epsilon = 0
         self.epsilon_max = 1.0
         self.epsilon_min = 0.01
-        # self.epsilon_decay = 0.005 
+        # self.epsilon_decay = 0.005 # ini
         self.epsilon_decay = 0.01 
         self.gamma = 0.9 
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
@@ -108,13 +108,15 @@ class Agent:
         """Load model using trainer's load_model method"""
         return self.trainer.load_model(filename)
 
-def train(load_previous=False, save_interval=100):
+def train(load_previous=False, save_interval=100, typemodel = 'b'):
     plot_scores = []
     plot_mean_scores = []
     cumulative_scores = 0
     record = 0
     record_on = 0
     
+    if model == 'b':
+        print("Using Bellman model for training.")
     # Initialize agent with option to load previous model
     agent = Agent(load_model=load_previous)
     game = SnakeGameAI()

@@ -2,36 +2,31 @@ import torch
 import random
 import numpy as np
 from collections import deque
+import os
+import json
 from game import SnakeGameAI, Direction, Point
 from model import Linear_QNet, BellmanTrainer
 from helper import plot
 import time
-import sys
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
-# LEARNING_RATE = 0.001
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.001
 
 class Agent:
-    def __init__(self, load_model=True):
+    def __init__(self, load_checkpoint=True, checkpoint_file='bellman_checkpoint.pth'):
         self.n_games = 0
-        self.epsilon = 0
+        self.epsilon = 1.0
+        self.gamma = 0.9
         self.epsilon_max = 1.0
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.005 
-        # self.epsilon_decay = 0.01
-        self.gamma = 0.9  # discount rate
-        self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
+        self.epsilon_decay = 0.01 
+        self.memory = deque(maxlen=MAX_MEMORY)
         self.model = Linear_QNet(11, 256, 3)
         self.trainer = BellmanTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
-        
-        # Load model if specified
-        if load_model:
-            self.load_model()
-            print(self.n_games, 'games loaded from bellmanModel.pth')
-            print(self.epsilon, 'epsilon loaded from bellmanModel.pth')
-            
+
+        if load_checkpoint:
+            self.load_checkpoint(checkpoint_file) # ini
 
     def get_state(self, game):
         head = game.snake[0]
@@ -91,7 +86,6 @@ class Agent:
 
     def get_action(self, state):
         self.epsilon = self.epsilon_min + (self.epsilon_max - self.epsilon_min) * np.exp(-self.epsilon_decay * self.n_games)
-
         final_move = [0, 0, 0]
         if random.random() < self.epsilon:
             move = random.randint(0, 2)
@@ -101,41 +95,42 @@ class Agent:
             prediction = self.model(state0)
             move = torch.argmax(prediction).item()
             final_move[move] = 1
-
         return final_move
 
-    def save_model(self, filename='bellmanBestModel.pth'):
-        """Save model using trainer's save_model method"""
-        return self.trainer.save_model(filename)
+    def save_checkpoint(self, filename='bellman_checkpoint.pth'):
+        folder = './model'
+        if not os.path.exists(folder):
+            os.makedirs(folder)
+        filepath = os.path.join(folder, filename)
+        torch.save({
+            'model_state_dict': self.model.state_dict(),
+            'n_games': self.n_games,
+            'epsilon': self.epsilon,
+            'memory': list(self.memory)
+        }, filepath)
+        print(f"Checkpoint saved to {filepath}")
 
-    def load_model(self, filename='bellmanBestModel.pth'):
-        """Load model using trainer's load_model method"""
-        return self.trainer.load_model(filename)
+    def load_checkpoint(self, filename='bellman_checkpoint.pth'):
+        filepath = os.path.join('./model', filename)
+        if os.path.exists(filepath):
+            checkpoint = torch.load(filepath, map_location=torch.device('cpu'), weights_only=False)
+            self.model.load_state_dict(checkpoint['model_state_dict'])
+            self.n_games = checkpoint.get('n_games', 0)
+            self.epsilon = checkpoint.get('epsilon', 1.0)
+            self.memory = deque(checkpoint.get('memory', []), maxlen=MAX_MEMORY)
+            print(f"Checkpoint loaded from {filepath}")
+            print(f"Resumed from episode: {self.n_games}, epsilon: {self.epsilon}")
+        else:
+            print(f"No checkpoint found at {filepath}")
 
-def train(load_previous=True, save_interval=100):
-    plot_scores = []
-    plot_mean_scores = []
-    cumulative_scores = 0
-    record = 0
-    record_on = 0
-    agent = Agent(load_model=load_previous)
+
+def train(load=True):
+    agent = Agent(load_checkpoint=load)
     game = SnakeGameAI()
-    start_time = time.time()
-    longest_time = 0
-    time_on = 0
-
-    print('Training started...')
-    if load_previous:
-        print('Loading previous model...')
-        agent.load_model('bellmanModel.pth')
-        print(f'Continuing from episode {agent.n_games}')
-    else:
-        print('Starting new training session...')
-        print('Press Ctrl+C to stop training and save progress.')
-        print('Training will save checkpoints every', save_interval, 'episodes.')
-        print('Use "python agent.py play" to play with the trained model.')
-
-
+    plot_scores, plot_mean_scores = [], []
+    total_score = 0
+    record = 0
+    episode_data = []
 
     try:
         while True:
@@ -151,52 +146,50 @@ def train(load_previous=True, save_interval=100):
                 game.reset()
                 agent.n_games += 1
                 agent.train_long_memory()
-                cumulative_scores += score
-                running_time = time.time() - start_time
 
                 if score > record:
                     record = score
-                    agent.save_model('bellmanBestModel.pth') 
-                    record_on = agent.n_games
+                    agent.save_checkpoint('bellman_best.pth')
 
-                if agent.n_games % save_interval == 0:
-                    agent.trainer.save_model(f'checkpoint_episode_{agent.n_games}.pth')
+                agent.save_checkpoint()
 
-                if running_time > longest_time:
-                    longest_time = running_time
-                    time_on = agent.n_games
-
+                total_score += score
+                mean_score = total_score / agent.n_games
                 plot_scores.append(score)
-                mean_score = cumulative_scores / agent.n_games
                 plot_mean_scores.append(mean_score)
                 plot(plot_scores, plot_mean_scores)
 
-                print(
-                    'Bellman Learning',
-                    '\nEpisode:', agent.n_games,
-                    '\nScore', score,
-                    '\nHigh Score:', record, 'pada episode ke-', record_on,
-                    '\nAll Scores:', cumulative_scores,
-                    '\nMean Score:', mean_score,
-                    '\nEpsilon:', agent.epsilon,
-                    '\nTime:', running_time,
-                    '\nLongest Time:', longest_time, 'pada episode ke-', time_on,
-                    '\n')
+                # Simpan data episode
+                episode_data.append({
+                    'episode': agent.n_games,
+                    'score': score,
+                    'mean_score': mean_score,
+                    'epsilon': agent.epsilon
+                })
 
-                running_time = 0
-                start_time = time.time()
+                # Simpan berkala
+                if agent.n_games % 100 == 0:
+                    with open(f'data/bellman_episode_data.json', 'w') as data:
+                        json.dump(episode_data, data, indent=2)
+                    
+                        agent.save_checkpoint(f'bellman_checkpoint_{agent.n_games}.pth')
+                    
 
+                print(f'Game {agent.n_games}, Score: {score}, Record: {record}, Mean: {mean_score:.2f}, Epsilon: {agent.epsilon:.4f}')
+                
     except KeyboardInterrupt:
         print("Training interrupted by user.")
-        agent.trainer.save_model('bellmanModel.pth')
+        agent.save_checkpoint('bellman_checkpoint.pth')
         print("Progress saved!")
 
 
 if __name__ == '__main__':
-    import sys
-    if len(sys.argv) > 1 and sys.argv[1] == 'play':
-        train(load_previous=False)
-    elif len(sys.argv) > 1 and sys.argv[1] == 'continue':
-        train(load_previous=True)
+    # Cek argumen untuk mode play atau continue
+    start = input("Mulai training baru? (y/n): ").strip().lower()
+    if start == 'n':
+        print("Melanjutkan training sebelumnya...")
+        train(True)
     else:
-        train()
+        print("Memulai training baru...")
+        train(False)
+
