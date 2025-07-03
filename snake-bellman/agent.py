@@ -10,7 +10,8 @@ import sys
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
-LEARNING_RATE = 0.001
+# LEARNING_RATE = 0.001
+LEARNING_RATE = 0.01
 
 class Agent:
     def __init__(self, load_model=True):
@@ -18,8 +19,8 @@ class Agent:
         self.epsilon = 0
         self.epsilon_max = 1.0
         self.epsilon_min = 0.01
-        # self.epsilon_decay = 0.005 
-        self.epsilon_decay = 0.01
+        self.epsilon_decay = 0.005 
+        # self.epsilon_decay = 0.01
         self.gamma = 0.9  # discount rate
         self.memory = deque(maxlen=MAX_MEMORY)  # popleft()
         self.model = Linear_QNet(11, 256, 3)
