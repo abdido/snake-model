@@ -7,7 +7,6 @@ import json
 from game import SnakeGameAI, Direction, Point
 from model import Linear_QNet, BellmanTrainer
 from helper import plot
-import time
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
@@ -16,11 +15,11 @@ LEARNING_RATE = 0.001
 class Agent:
     def __init__(self, load_checkpoint=True, checkpoint_file='bellman_checkpoint.pth'):
         self.n_games = 0
-        self.epsilon = 1.0
+        self.epsilon = 0.5
         self.gamma = 0.9
-        self.epsilon_max = 1.0
+        self.epsilon_max = 0.5
         self.epsilon_min = 0.01
-        self.epsilon_decay = 0.01 
+        self.epsilon_decay = 0.005 
         self.memory = deque(maxlen=MAX_MEMORY)
         self.model = Linear_QNet(11, 256, 3)
         self.trainer = BellmanTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
