@@ -1,0 +1,584 @@
+[
+  {
+    "episode": 4,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.985260820207032
+  },
+  {
+    "episode": 5,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9803966865736877
+  },
+  {
+    "episode": 6,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9755568129080493
+  },
+  {
+    "episode": 7,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.970741078213023
+  },
+  {
+    "episode": 8,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9659493620949908
+  },
+  {
+    "episode": 9,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9611815447608
+  },
+  {
+    "episode": 10,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9564375070147689
+  },
+  {
+    "episode": 11,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9517171302557069
+  },
+  {
+    "episode": 12,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.947020296473949
+  },
+  {
+    "episode": 13,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9423468882484062
+  },
+  {
+    "episode": 14,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9376967887436294
+  },
+  {
+    "episode": 15,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9330698817068888
+  },
+  {
+    "episode": 16,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9284660514652673
+  },
+  {
+    "episode": 17,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9238851829227694
+  },
+  {
+    "episode": 18,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9193271615574428
+  },
+  {
+    "episode": 19,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9147918734185159
+  },
+  {
+    "episode": 20,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9102792051235491
+  },
+  {
+    "episode": 21,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9057890438555999
+  },
+  {
+    "episode": 22,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.9013212773604029
+  },
+  {
+    "episode": 23,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.896875793943563
+  },
+  {
+    "episode": 24,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.892452482467763
+  },
+  {
+    "episode": 25,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.888051232349986
+  },
+  {
+    "episode": 26,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.8836719335587495
+  },
+  {
+    "episode": 27,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.8793144766113556
+  },
+  {
+    "episode": 28,
+    "score": 0,
+    "mean_score": 0.0,
+    "epsilon": 0.8749787525711541
+  },
+  {
+    "episode": 29,
+    "score": 1,
+    "mean_score": 0.034482758620689655,
+    "epsilon": 0.8706646530448178
+  },
+  {
+    "episode": 30,
+    "score": 0,
+    "mean_score": 0.03333333333333333,
+    "epsilon": 0.8663720701796339
+  },
+  {
+    "episode": 31,
+    "score": 0,
+    "mean_score": 0.03225806451612903,
+    "epsilon": 0.8621008966608072
+  },
+  {
+    "episode": 32,
+    "score": 0,
+    "mean_score": 0.03125,
+    "epsilon": 0.8578510257087774
+  },
+  {
+    "episode": 33,
+    "score": 0,
+    "mean_score": 0.030303030303030304,
+    "epsilon": 0.8536223510765493
+  },
+  {
+    "episode": 34,
+    "score": 1,
+    "mean_score": 0.058823529411764705,
+    "epsilon": 0.8494147670470367
+  },
+  {
+    "episode": 35,
+    "score": 0,
+    "mean_score": 0.05714285714285714,
+    "epsilon": 0.8452281684304199
+  },
+  {
+    "episode": 36,
+    "score": 1,
+    "mean_score": 0.08333333333333333,
+    "epsilon": 0.8410624505615153
+  },
+  {
+    "episode": 37,
+    "score": 0,
+    "mean_score": 0.08108108108108109,
+    "epsilon": 0.8369175092971592
+  },
+  {
+    "episode": 38,
+    "score": 0,
+    "mean_score": 0.07894736842105263,
+    "epsilon": 0.8327932410136044
+  },
+  {
+    "episode": 39,
+    "score": 0,
+    "mean_score": 0.07692307692307693,
+    "epsilon": 0.8286895426039287
+  },
+  {
+    "episode": 40,
+    "score": 0,
+    "mean_score": 0.075,
+    "epsilon": 0.8246063114754583
+  },
+  {
+    "episode": 41,
+    "score": 1,
+    "mean_score": 0.0975609756097561,
+    "epsilon": 0.820543445547202
+  },
+  {
+    "episode": 42,
+    "score": 0,
+    "mean_score": 0.09523809523809523,
+    "epsilon": 0.8165008432473004
+  },
+  {
+    "episode": 43,
+    "score": 0,
+    "mean_score": 0.09302325581395349,
+    "epsilon": 0.8124784035104852
+  },
+  {
+    "episode": 44,
+    "score": 0,
+    "mean_score": 0.09090909090909091,
+    "epsilon": 0.8084760257755536
+  },
+  {
+    "episode": 45,
+    "score": 0,
+    "mean_score": 0.08888888888888889,
+    "epsilon": 0.8044936099828537
+  },
+  {
+    "episode": 46,
+    "score": 0,
+    "mean_score": 0.08695652173913043,
+    "epsilon": 0.8005310565717833
+  },
+  {
+    "episode": 47,
+    "score": 0,
+    "mean_score": 0.0851063829787234,
+    "epsilon": 0.7965882664783007
+  },
+  {
+    "episode": 48,
+    "score": 0,
+    "mean_score": 0.08333333333333333,
+    "epsilon": 0.7926651411324482
+  },
+  {
+    "episode": 49,
+    "score": 0,
+    "mean_score": 0.08163265306122448,
+    "epsilon": 0.7887615824558879
+  },
+  {
+    "episode": 50,
+    "score": 0,
+    "mean_score": 0.08,
+    "epsilon": 0.7848774928594494
+  },
+  {
+    "episode": 51,
+    "score": 0,
+    "mean_score": 0.0784313725490196,
+    "epsilon": 0.7810127752406908
+  },
+  {
+    "episode": 52,
+    "score": 0,
+    "mean_score": 0.07692307692307693,
+    "epsilon": 0.7771673329814701
+  },
+  {
+    "episode": 53,
+    "score": 1,
+    "mean_score": 0.09433962264150944,
+    "epsilon": 0.7733410699455306
+  },
+  {
+    "episode": 54,
+    "score": 1,
+    "mean_score": 0.1111111111111111,
+    "epsilon": 0.7695338904760971
+  },
+  {
+    "episode": 55,
+    "score": 0,
+    "mean_score": 0.10909090909090909,
+    "epsilon": 0.7657456993934846
+  },
+  {
+    "episode": 56,
+    "score": 0,
+    "mean_score": 0.10714285714285714,
+    "epsilon": 0.7619764019927188
+  },
+  {
+    "episode": 57,
+    "score": 0,
+    "mean_score": 0.10526315789473684,
+    "epsilon": 0.7582259040411682
+  },
+  {
+    "episode": 58,
+    "score": 0,
+    "mean_score": 0.10344827586206896,
+    "epsilon": 0.7544941117761887
+  },
+  {
+    "episode": 59,
+    "score": 0,
+    "mean_score": 0.1016949152542373,
+    "epsilon": 0.7507809319027796
+  },
+  {
+    "episode": 60,
+    "score": 0,
+    "mean_score": 0.1,
+    "epsilon": 0.7470862715912503
+  },
+  {
+    "episode": 61,
+    "score": 1,
+    "mean_score": 0.11475409836065574,
+    "epsilon": 0.7434100384749007
+  },
+  {
+    "episode": 62,
+    "score": 1,
+    "mean_score": 0.12903225806451613,
+    "epsilon": 0.7397521406477116
+  },
+  {
+    "episode": 63,
+    "score": 0,
+    "mean_score": 0.12698412698412698,
+    "epsilon": 0.7361124866620463
+  },
+  {
+    "episode": 64,
+    "score": 0,
+    "mean_score": 0.125,
+    "epsilon": 0.7324909855263663
+  },
+  {
+    "episode": 65,
+    "score": 1,
+    "mean_score": 0.13846153846153847,
+    "epsilon": 0.7288875467029541
+  },
+  {
+    "episode": 66,
+    "score": 0,
+    "mean_score": 0.13636363636363635,
+    "epsilon": 0.7253020801056514
+  },
+  {
+    "episode": 67,
+    "score": 1,
+    "mean_score": 0.14925373134328357,
+    "epsilon": 0.7217344960976069
+  },
+  {
+    "episode": 68,
+    "score": 0,
+    "mean_score": 0.14705882352941177,
+    "epsilon": 0.7181847054890343
+  },
+  {
+    "episode": 69,
+    "score": 1,
+    "mean_score": 0.15942028985507245,
+    "epsilon": 0.7146526195349836
+  },
+  {
+    "episode": 70,
+    "score": 2,
+    "mean_score": 0.18571428571428572,
+    "epsilon": 0.711138149933122
+  },
+  {
+    "episode": 71,
+    "score": 0,
+    "mean_score": 0.18309859154929578,
+    "epsilon": 0.7076412088215263
+  },
+  {
+    "episode": 72,
+    "score": 0,
+    "mean_score": 0.18055555555555555,
+    "epsilon": 0.7041617087764868
+  },
+  {
+    "episode": 73,
+    "score": 0,
+    "mean_score": 0.1780821917808219,
+    "epsilon": 0.7006995628103208
+  },
+  {
+    "episode": 74,
+    "score": 1,
+    "mean_score": 0.1891891891891892,
+    "epsilon": 0.6972546843691991
+  },
+  {
+    "episode": 75,
+    "score": 0,
+    "mean_score": 0.18666666666666668,
+    "epsilon": 0.6938269873309811
+  },
+  {
+    "episode": 76,
+    "score": 0,
+    "mean_score": 0.18421052631578946,
+    "epsilon": 0.6904163860030625
+  },
+  {
+    "episode": 77,
+    "score": 1,
+    "mean_score": 0.19480519480519481,
+    "epsilon": 0.6870227951202322
+  },
+  {
+    "episode": 78,
+    "score": 0,
+    "mean_score": 0.19230769230769232,
+    "epsilon": 0.6836461298425418
+  },
+  {
+    "episode": 79,
+    "score": 1,
+    "mean_score": 0.20253164556962025,
+    "epsilon": 0.680286305753183
+  },
+  {
+    "episode": 80,
+    "score": 1,
+    "mean_score": 0.2125,
+    "epsilon": 0.676943238856379
+  },
+  {
+    "episode": 81,
+    "score": 1,
+    "mean_score": 0.2222222222222222,
+    "epsilon": 0.6736168455752829
+  },
+  {
+    "episode": 82,
+    "score": 0,
+    "mean_score": 0.21951219512195122,
+    "epsilon": 0.6703070427498896
+  },
+  {
+    "episode": 83,
+    "score": 0,
+    "mean_score": 0.21686746987951808,
+    "epsilon": 0.6670137476349562
+  },
+  {
+    "episode": 84,
+    "score": 1,
+    "mean_score": 0.2261904761904762,
+    "epsilon": 0.663736877897933
+  },
+  {
+    "episode": 85,
+    "score": 0,
+    "mean_score": 0.2235294117647059,
+    "epsilon": 0.6604763516169062
+  },
+  {
+    "episode": 86,
+    "score": 0,
+    "mean_score": 0.22093023255813954,
+    "epsilon": 0.6572320872785489
+  },
+  {
+    "episode": 87,
+    "score": 0,
+    "mean_score": 0.21839080459770116,
+    "epsilon": 0.6540040037760834
+  },
+  {
+    "episode": 88,
+    "score": 1,
+    "mean_score": 0.22727272727272727,
+    "epsilon": 0.6507920204072543
+  },
+  {
+    "episode": 89,
+    "score": 0,
+    "mean_score": 0.2247191011235955,
+    "epsilon": 0.64759605687231
+  },
+  {
+    "episode": 90,
+    "score": 1,
+    "mean_score": 0.23333333333333334,
+    "epsilon": 0.6444160332719956
+  },
+  {
+    "episode": 91,
+    "score": 0,
+    "mean_score": 0.23076923076923078,
+    "epsilon": 0.6412518701055556
+  },
+  {
+    "episode": 92,
+    "score": 1,
+    "mean_score": 0.2391304347826087,
+    "epsilon": 0.638103488268746
+  },
+  {
+    "episode": 93,
+    "score": 0,
+    "mean_score": 0.23655913978494625,
+    "epsilon": 0.6349708090518567
+  },
+  {
+    "episode": 94,
+    "score": 1,
+    "mean_score": 0.24468085106382978,
+    "epsilon": 0.6318537541377444
+  },
+  {
+    "episode": 95,
+    "score": 1,
+    "mean_score": 0.25263157894736843,
+    "epsilon": 0.6287522455998737
+  },
+  {
+    "episode": 96,
+    "score": 1,
+    "mean_score": 0.2604166666666667,
+    "epsilon": 0.6256662059003698
+  },
+  {
+    "episode": 97,
+    "score": 0,
+    "mean_score": 0.25773195876288657,
+    "epsilon": 0.6225955578880794
+  },
+  {
+    "episode": 98,
+    "score": 0,
+    "mean_score": 0.25510204081632654,
+    "epsilon": 0.6195402247966423
+  },
+  {
+    "episode": 99,
+    "score": 1,
+    "mean_score": 0.26262626262626265,
+    "epsilon": 0.616500130242572
+  },
+  {
+    "episode": 100,
+    "score": 0,
+    "mean_score": 0.26,
+    "epsilon": 0.6134751982233462
+  }
+]

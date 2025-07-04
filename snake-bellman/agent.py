@@ -11,16 +11,16 @@ import time
 
 MAX_MEMORY = 100_000
 BATCH_SIZE = 1000
-LEARNING_RATE = 0.001
+LEARNING_RATE = 0.001 # use 0.001
 
 class Agent:
     def __init__(self, load_checkpoint=True, checkpoint_file='bellman_checkpoint.pth'):
         self.n_games = 0
-        self.epsilon = 1.0
-        self.gamma = 0.9
-        self.epsilon_max = 1.0
-        self.epsilon_min = 0.01
-        self.epsilon_decay = 0.01 
+        self.gamma = 0.9 # use 0.9 
+        self.epsilon = 1.0 # initial epsilon
+        self.epsilon_max = 1.0 #use 1.0
+        self.epsilon_min = 0.01 # use 0.01
+        self.epsilon_decay = 0.005 # use 0.005
         self.memory = deque(maxlen=MAX_MEMORY)
         self.model = Linear_QNet(11, 256, 3)
         self.trainer = BellmanTrainer(self.model, learning_rate=LEARNING_RATE, gamma=self.gamma)
@@ -151,7 +151,7 @@ def train(load=True):
                     record = score
                     agent.save_checkpoint('bellman_best.pth')
 
-                agent.save_checkpoint()
+                # agent.save_checkpoint()
 
                 total_score += score
                 mean_score = total_score / agent.n_games
@@ -170,8 +170,7 @@ def train(load=True):
                 # Simpan berkala
                 if agent.n_games % 100 == 0:
                     with open(f'data/bellman_episode_data.json', 'w') as data:
-                        json.dump(episode_data, data, indent=2)
-                    
+                        json.dump(episode_data, data, indent=2)                    
                         agent.save_checkpoint(f'bellman_checkpoint_{agent.n_games}.pth')
                     
 
@@ -185,11 +184,10 @@ def train(load=True):
 
 if __name__ == '__main__':
     # Cek argumen untuk mode play atau continue
-    start = input("Mulai training baru? (y/n): ").strip().lower()
-    if start == 'n':
-        print("Melanjutkan training sebelumnya...")
-        train(True)
-    else:
+    start = input("Mulai training baru? (y/n): (n)").strip().lower()
+    if start == 'y':
         print("Memulai training baru...")
         train(False)
-
+    else:
+        print("Melanjutkan training sebelumnya...")
+        train(True)
